@@ -170,7 +170,8 @@ public class PriorityScheduler extends Scheduler {
 	protected ThreadState pickNextThread() {
 	    // implement me
 		//picks the next highest thread in waiting queue
-	    return getThreadState((KThread) waitingQueue.peek());
+		System.out.println("returning KThread waitingQueue.peek");
+	    return getThreadState((KThread) waitingQueue.poll());
 	}
 	
 	public void print() {
@@ -204,13 +205,9 @@ public class PriorityScheduler extends Scheduler {
     public class sortByPriority implements Comparator<KThread> {
     	
 		public int compare(KThread x, KThread y){
-			if(getThreadState(x).getEffectivePriority() > getThreadState(y).getEffectivePriority()) {
-				return 1;
-			}else if(getThreadState(y).getEffectivePriority() > getThreadState(x).getEffectivePriority()) {
-				return -1;
-			}else
-				return 0;
-		
+			int X = getThreadState(x).getEffectivePriority();
+			int Y = getThreadState(y).getEffectivePriority();
+				return X-Y;
 		}
 	}
 
@@ -239,6 +236,8 @@ public class PriorityScheduler extends Scheduler {
 
 	public void addToQueue(PriorityQueue t) {
 		this.queue.add(t);
+		t.waitingQueue.add(this.thread);   //===** this had Typecast issues **===
+		
 		
 	}
 	
@@ -272,13 +271,16 @@ public class PriorityScheduler extends Scheduler {
 		if(!this.queue.isEmpty()) {
 			for(int i = 0; i <= this.queue.lastIndexOf(this.queue.getLast()); i++) {
 				
-				if(this.queue.get(i).transferPriority && !this.queue.get(i).waitingQueue.isEmpty()) {
+				if(this.queue.get(i).transferPriority){ 
+					if(!this.queue.get(i).waitingQueue.isEmpty()) {
 					//System.out.print(this.queue.get(i)+"->");
 					if(this.queue.get(i).pickNextThread().getEffectivePriority() > highest) {
 						
 						highest = this.queue.get(i).pickNextThread().getEffectivePriority();
 					}
 				}
+				
+			}
 			}//System.out.println();
 		}
 	    return highest;
@@ -339,10 +341,10 @@ public class PriorityScheduler extends Scheduler {
 		waitQueue.owner = this.thread;
 		
 		
-		//System.out.println("acquired " + this.thread);
-		}//else {
-		//	System.out.println(" not available "+ this.thread);
-		//}
+		System.out.println("acquired " + this.thread);
+		}else {
+			System.out.println(" not available "+ this.thread);
+		}
 		
 	}	
 	
@@ -380,47 +382,47 @@ public class PriorityScheduler extends Scheduler {
 		
 		boolean intStatus = Machine.interrupt().disable();
 		
-		queue3.acquire(thread1);
-		queue.acquire(thread1);
-		queue.waitForAccess(thread2);
-		queue.acquire(thread1);
+		queue3.acquire(thread1);		//3: 1
+		queue.acquire(thread1); 		//1: 1 <- (3, 1)
+		queue.waitForAccess(thread2);	//1: 2 <- (1)
+		queue.acquire(thread1);			//1: 1 <-(3, 1)
 		
-		queue2.acquire(thread4);
-		queue2.waitForAccess(thread1);
+		queue2.acquire(thread4);		//2: 4 <-(2)
+		queue2.waitForAccess(thread1);	//2: 1 <- (3, 2, 1)
 		
-		queue2.print();
+		queue2.print(); //4, 1;
 		
 		System.out.println("thread1 EP="+s.getThreadState(thread1).getEffectivePriority());
 		System.out.println("thread2 EP="+s.getThreadState(thread2).getEffectivePriority());
 		System.out.println("thread4 EP="+s.getThreadState(thread4).getEffectivePriority());
 		
-		queue.print();
+		queue.print(); // 2, 1;
 		
 		
-		s.getThreadState(thread2).setPriority(3);
+		s.getThreadState(thread2).setPriority(3); //(3, 1, 2)
 		
 		System.out.println("After setting thread2's EP=3:");
-		System.out.println("thread1 EP="+s.getThreadState(thread1).getEffectivePriority());
-		System.out.println("thread2 EP="+s.getThreadState(thread2).getEffectivePriority());
-		System.out.println("thread4 EP="+s.getThreadState(thread4).getEffectivePriority());
+		System.out.println("thread1 EP="+s.getThreadState(thread1).getEffectivePriority()); // 3
+		System.out.println("thread2 EP="+s.getThreadState(thread2).getEffectivePriority()); // 3
+		System.out.println("thread4 EP="+s.getThreadState(thread4).getEffectivePriority()); // 1
 	
 		
 		queue.waitForAccess(thread3);
 		s.getThreadState(thread3).setPriority(5);
 		
 		System.out.println("After adding thread3 with EP=5:");
-		System.out.println("thread1 EP="+s.getThreadState(thread1).getEffectivePriority());
-		System.out.println("thread2 EP="+s.getThreadState(thread2).getEffectivePriority());
-		System.out.println("thread3 EP="+s.getThreadState(thread3).getEffectivePriority());
-		System.out.println("thread4 EP="+s.getThreadState(thread4).getEffectivePriority());
+		System.out.println("thread1 EP="+s.getThreadState(thread1).getEffectivePriority()); // 5
+		System.out.println("thread2 EP="+s.getThreadState(thread2).getEffectivePriority()); // 5
+		System.out.println("thread3 EP="+s.getThreadState(thread3).getEffectivePriority()); // 5
+		System.out.println("thread4 EP="+s.getThreadState(thread4).getEffectivePriority()); // 1
 		
 		s.getThreadState(thread3).setPriority(2);
 		
 		System.out.println("After setting thread3 EP=2:");
-		System.out.println("thread1 EP="+s.getThreadState(thread1).getEffectivePriority());
-		System.out.println("thread2 EP="+s.getThreadState(thread2).getEffectivePriority());
-		System.out.println("thread3 EP="+s.getThreadState(thread3).getEffectivePriority());
-		System.out.println("thread4 EP="+s.getThreadState(thread4).getEffectivePriority());
+		System.out.println("thread1 EP="+s.getThreadState(thread1).getEffectivePriority()); // 3
+		System.out.println("thread2 EP="+s.getThreadState(thread2).getEffectivePriority()); // 3
+		System.out.println("thread3 EP="+s.getThreadState(thread3).getEffectivePriority()); // 3
+		System.out.println("thread4 EP="+s.getThreadState(thread4).getEffectivePriority()); // 1
 		
 		System.out.println("Thread1 acquires queue and queue3");
 		
