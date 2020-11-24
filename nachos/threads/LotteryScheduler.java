@@ -273,10 +273,8 @@ public class LotteryScheduler extends Scheduler{
     				
     				if(this.queue.get(i).transferPriority && !this.queue.get(i).waitingQueue.isEmpty()) {
     					//System.out.print(this.queue.get(i)+"->");
-    					if(this.queue.get(i+1).chooseThread(i+1).getEffectivePriority(i+1) > total) {
-    						
-    						total += this.queue.get(i+1).chooseThread(i+1).getEffectivePriority(i+1);
-    					}
+    						total += this.queue.get(i).chooseThread(i).getEffectivePriority(i+1);
+    					
     				}
     			}//System.out.println();
     		}
@@ -292,11 +290,9 @@ public class LotteryScheduler extends Scheduler{
 					if(this.queue.get(i).transferPriority){ 
 						if(!this.queue.get(i).waitingQueue.isEmpty()) {
 						//System.out.print(this.queue.get(i)+"->");
-						if(this.queue.get(i).chooseThread(i+1).getEffectivePriority(i+1) > total) {
 							
-							total += this.queue.get(i).chooseThread(i+1).getEffectivePriority(i+1);
+							total += this.queue.get(i).chooseThread(i).getEffectivePriority(i+1);
 							
-						}
 					}
 				}
 				}//System.out.println();
