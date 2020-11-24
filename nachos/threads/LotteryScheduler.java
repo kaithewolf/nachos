@@ -49,7 +49,7 @@ public class LotteryScheduler extends Scheduler{
 	return new LotteryQueue(transferTickets);
     }
     
-    public int getTickets(KThread thread) {
+    public int getPriority(KThread thread) {
     	Lib.assertTrue(Machine.interrupt().disabled());
     		       
     	return getThreadState(thread).getPriority();
@@ -75,11 +75,11 @@ public class LotteryScheduler extends Scheduler{
     		       
     	KThread thread = KThread.currentThread();
 
-    	int priority = getPriority(thread);
-    	if (priority == Integer.MAX_VALUE)
+    	int tickets = getPriority(thread);
+    	if (tickets == Integer.MAX_VALUE)
     	    return false;
 
-    	setPriority(thread, priority+1);
+    	setPriority(thread, tickets+1);
 
     	Machine.interrupt().restore(intStatus);
     	return true;
@@ -90,11 +90,11 @@ public class LotteryScheduler extends Scheduler{
     		       
     	KThread thread = KThread.currentThread();
 
-    	int priority = getPriority(thread);
-    	if (priority == 0)
+    	int tickets = getPriority(thread);
+    	if (tickets == 0)
     	    return false;
 
-    	setPriority(thread, priority-1);
+    	setPriority(thread, tickets-1);
 
     	Machine.interrupt().restore(intStatus);
     	return true;
